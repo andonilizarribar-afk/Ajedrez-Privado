@@ -5,7 +5,6 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 
-// Configuración estricta de seguridad para permitir conexiones externas
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -13,7 +12,6 @@ const io = new Server(server, {
     }
 });
 
-// Ruta obligatoria para comprobar que el servidor responde
 app.get('/', (req, res) => {
     res.send('Servidor de Ajedrez Activo y Funcionando');
 });
@@ -23,8 +21,15 @@ const PORT = process.env.PORT || 3000;
 io.on('connection', (socket) => {
     console.log('Dispositivo conectado ID:', socket.id);
 
+    // Cuando un jugador entra, lo metemos en su sala privada asignada
+    socket.on('unirse_sala', (sala) => {
+        socket.join(sala);
+        console.log(`Usuario asignado a la sala: ${sala}`);
+    });
+
+    // Escucha el movimiento de la sala y lo reenvía exclusivamente a los miembros de esa misma sala
     socket.on('movimiento_remoto', (datos) => {
-        socket.broadcast.emit('recibir_movimiento', datos);
+        socket.to(datos.sala).emit('recibir_movimiento', datos);
     });
 
     socket.on('disconnect', () => {
@@ -35,3 +40,6 @@ io.on('connection', (socket) => {
 server.listen(PORT, () => {
     console.log(`Servidor activo en puerto ${PORT}`);
 });
+
+
+

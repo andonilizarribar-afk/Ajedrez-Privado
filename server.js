@@ -4,17 +4,25 @@ const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
+
+// Configuración estricta de seguridad para permitir conexiones externas
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
 });
 
-// El servidor escuchará en el puerto que le asigne internet o en el 3000 local
+// Ruta obligatoria para comprobar que el servidor responde
+app.get('/', (req, res) => {
+    res.send('Servidor de Ajedrez Activo y Funcionando');
+});
+
 const PORT = process.env.PORT || 3000;
 
 io.on('connection', (socket) => {
     console.log('Dispositivo conectado ID:', socket.id);
 
-    // Reenvía el movimiento al otro dispositivo inmediatamente
     socket.on('movimiento_remoto', (datos) => {
         socket.broadcast.emit('recibir_movimiento', datos);
     });
